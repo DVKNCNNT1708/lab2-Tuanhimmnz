@@ -1,55 +1,88 @@
-# Event Contract sơ bộ — dùng cho dependency Queue async
+# Event Contract so bo - dependency Queue async
 
-> File này chỉ dùng cho các cặp Queue async ở Lab 02 để ghi nhận thỏa thuận ban đầu. Đặc tả chi tiết bằng AsyncAPI sẽ chuyển sang Lab 03.
+> File nay ghi nhan thoa thuan ban dau cho Pair #7 trong Lab 02. Dac ta chi tiet bang AsyncAPI se chuyen sang Lab 03.
 
-## 1. Thông tin dependency
+## 1. Thong tin dependency
 
-- Dependency số:
-- Producer:
-- Consumer:
-- Cơ chế: Queue async
-- Event/topic dự kiến:
-- Người ghi:
-- Ngày:
+- Dependency so: #7
+- Producer: Camera Stream (A2)
+- Consumer: Analytics (A5)
+- Product: A
+- Co che: Queue async
+- Event/topic du kien: `camera.events.v1`
+- Nguoi ghi: Duong Trong Tuan - 1771020715
+- Ngay: 2026-05-18
 
-## 2. Mục đích nghiệp vụ
+## 2. Muc dich nghiep vu
 
-Mô tả ngắn event này sinh ra khi nào và consumer dùng để làm gì.
+Camera Stream phat event khi co motion, frame da duoc phan tich, hoac trang thai camera thay doi. Analytics tieu thu cac event nay de tong hop metric theo camera, khu vuc va cua so thoi gian, phuc vu dashboard va bao cao bat thuong trong Smart Campus Product A.
 
 ## 3. Event name / topic
 
-| Mục | Giá trị |
+| Muc | Gia tri |
 |---|---|
-| Event name | `<domain.event.action>` |
-| Topic/queue | `<topic-name>` |
-| Producer | `<service>` |
-| Consumer | `<service>` |
+| Event name | `camera.motion.detected` |
+| Topic/queue | `camera.events.v1` |
+| Producer | Camera Stream (A2) |
+| Consumer | Analytics (A5) |
 
-## 4. Payload tối thiểu
+| Muc | Gia tri |
+|---|---|
+| Event name | `camera.frame.analyzed` |
+| Topic/queue | `camera.events.v1` |
+| Producer | Camera Stream (A2) |
+| Consumer | Analytics (A5) |
+
+| Muc | Gia tri |
+|---|---|
+| Event name | `camera.status.changed` |
+| Topic/queue | `camera.events.v1` |
+| Producer | Camera Stream (A2) |
+| Consumer | Analytics (A5) |
+
+## 4. Payload toi thieu
 
 ```json
 {
-  "eventId": "uuid",
-  "eventType": "domain.event.created",
-  "occurredAt": "2026-05-10T08:30:00Z",
-  "correlationId": "uuid",
-  "source": "service-name",
-  "data": {}
+  "eventId": "01970f8a-7a2b-7d2d-9444-1fbc0a701101",
+  "eventType": "camera.motion.detected",
+  "occurredAt": "2026-05-18T15:20:00Z",
+  "correlationId": "01970f8a-7a2b-7d2d-9444-1fbc0a701100",
+  "source": "camera-stream-a2",
+  "cameraId": "CAM-A-LOBBY-01",
+  "campusZone": "A-Lobby",
+  "detectionId": "01970f8a-7a2b-7d2d-9444-1fbc0a701102",
+  "motion": {
+    "confidence": 0.94,
+    "boundingBoxes": [
+      {
+        "x": 0.12,
+        "y": 0.18,
+        "width": 0.24,
+        "height": 0.31
+      }
+    ],
+    "imageRef": "s3://smart-campus-a/camera/CAM-A-LOBBY-01/frame-001.jpg"
+  }
 }
 ```
 
-## 5. Ràng buộc cần thống nhất
+## 5. Rang buoc can thong nhat
 
-| Vấn đề | Quyết định tạm thời |
+| Van de | Quyet dinh tam thoi |
 |---|---|
-| Event id có bắt buộc không? | Có |
-| Có cần correlationId không? | Có |
-| Có cho phép gửi trùng event không? | Có thể, consumer phải idempotent |
-| Retry khi lỗi | Ghi rõ ở Lab 03 |
-| Dead-letter queue | Ghi rõ ở Lab 03 |
+| Event id co bat buoc khong? | Co. `eventId` la idempotency key. |
+| Co can correlationId khong? | Co. `correlationId` bat buoc cho moi event. |
+| Co cho phep gui trung event khong? | Co the xay ra do retry; consumer phai idempotent. |
+| Co nhung anh raw/base64 khong? | Khong. Chi gui `imageRef` hoac `frameRef`. |
+| `detectionId` co bat buoc khong? | Field bat buoc nhung gia tri co the `null`. |
+| Retry khi loi | Chuyen sang Lab 03; tam thoi gia dinh retry co backoff. |
+| Dead-letter queue | Chuyen sang Lab 03; can luu event loi schema hoac qua so lan retry. |
 
-## 6. Issue chuyển sang Lab 03
+## 6. Issue chuyen sang Lab 03
 
-1. ...
-2. ...
-3. ...
+1. Chot broker/topic thuc te va convention partition key theo `cameraId`.
+2. Dac ta AsyncAPI cho `camera.events.v1`, retry policy va dead-letter queue.
+3. Chot thoi gian luu raw event de Analytics doi soat aggregate.
+4. Chot schema evolution rule: chi them field optional cho backward-compatible change.
+5. Xac dinh nguong `abnormalScore` de tinh `abnormalCount`.

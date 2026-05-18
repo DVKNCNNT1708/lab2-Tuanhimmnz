@@ -1,0 +1,76 @@
+﻿# req-01-health.png
+PS C:\Users\linzi\Downloads\buoi2\lab2-Tuanhimmnz> curl.exe -sS -i http://localhost:4010/health
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Content-type: application/json
+Content-Length: 101
+Date: Mon, 18 May 2026 16:31:51 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"status":"ok","service":"analytics-camera-contract","version":"1.0.0","time":"2026-05-18T16:00:00Z"}
+
+# req-02-post-camera-event.png
+PS C:\Users\linzi\Downloads\buoi2\lab2-Tuanhimmnz> $payload | curl.exe -sS -i -X POST http://localhost:4010/camera-events -H "Authorization: Bearer test-token" -H "Content-Type: application/json" --data-binary "@-"
+HTTP/1.1 202 Accepted
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Location: http://example.com
+Content-type: application/json
+Content-Length: 161
+Date: Mon, 18 May 2026 16:31:51 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"eventId":"01970f8a-7a2b-7d2d-9444-1fbc0a701101","status":"accepted","acceptedAt":"2026-05-18T15:20:01Z","duplicate":false,"aggregateJobId":"job-20260518-0001"}
+
+# req-03-list-camera-events.png
+PS C:\Users\linzi\Downloads\buoi2\lab2-Tuanhimmnz> curl.exe -sS -i "http://localhost:4010/camera-events?limit=1" -H "Authorization: Bearer test-token"
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Content-type: application/json
+Content-Length: 552
+Date: Mon, 18 May 2026 16:31:51 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"items":[{"eventId":"01970f8a-7a2b-7d2d-9444-1fbc0a701101","eventType":"camera.motion.detected","occurredAt":"2026-05-18T15:20:00Z","correlationId":"01970f8a-7a2b-7d2d-9444-1fbc0a701100","source":"camera-stream-a2","cameraId":"CAM-A-LOBBY-01","campusZone":"A-Lobby","detectionId":"01970f8a-7a2b-7d2d-9444-1fbc0a701102","motion":{"confidence":0.94,"boundingBoxes":[{"x":0.12,"y":0.18,"width":0.24,"height":0.31}],"imageRef":"s3://smart-campus-a/camera/CAM-A-LOBBY-01/frame-001.jpg"}}],"page":{"nextCursor":"eyJvZmZzZXQiOjF9","limit":20,"hasMore":true}}
+
+# req-04-list-camera-aggregates.png
+PS C:\Users\linzi\Downloads\buoi2\lab2-Tuanhimmnz> curl.exe -sS -i "http://localhost:4010/camera-aggregates?limit=1&window=15m" -H "Authorization: Bearer test-token"
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Content-type: application/json
+Content-Length: 326
+Date: Mon, 18 May 2026 16:31:52 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"items":[{"cameraId":"CAM-A-LOBBY-01","campusZone":"A-Lobby","windowStart":"2026-05-18T15:15:00Z","windowEnd":"2026-05-18T15:30:00Z","motionCount":12,"abnormalCount":1,"analyzedFrameCount":48,"healthStatus":"online","lastEventId":"01970f8a-7a2b-7d2d-9444-1fbc0a701101"}],"page":{"nextCursor":null,"limit":20,"hasMore":false}}
+
+# req-05-problem-422.png
+PS C:\Users\linzi\Downloads\buoi2\lab2-Tuanhimmnz> $payload | curl.exe -sS -i -X POST http://localhost:4010/camera-events -H "Authorization: Bearer test-token" -H "Content-Type: application/json" -H "Prefer: code=422" --data-binary "@-"
+HTTP/1.1 422 Unprocessable Entity
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Content-type: application/problem+json
+Content-Length: 344
+Date: Mon, 18 May 2026 16:31:52 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://errors.smart-campus.local/unprocessable-entity","title":"Business rule violation","status":422,"detail":"Motion confidence must be provided for camera.motion.detected.","instance":"/camera-events","traceId":"trace-422-camera-event","invalidParams":[{"name":"motion.confidence","reason":"Field is required for motion events."}]}
+
